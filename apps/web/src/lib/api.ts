@@ -89,3 +89,27 @@ export const tasksApi = {
     api.put(`/api/features/${featureId}/tasks/reorder`, { tasks }).then((r) => r.data),
 }
 
+
+// ── Tasks Execution ───────────────────────────────────────────────────────────
+
+export const taskExecutionApi = {
+  execute: (taskId: string, agent: 'claude' | 'copilot') =>
+    api.post(`/api/tasks/${taskId}/execute`, { agent }).then((r) => r.data.data),
+  stop: (taskId: string) => api.post(`/api/tasks/${taskId}/stop`).then((r) => r.data),
+  attempts: (taskId: string) =>
+    api.get(`/api/tasks/${taskId}/attempts`).then((r) => r.data.data),
+  workspace: (taskId: string) =>
+    api.get(`/api/tasks/${taskId}/workspace`).then((r) => r.data.data),
+}
+
+// ── Workspaces ────────────────────────────────────────────────────────────────
+
+export const workspacesApi = {
+  get: (id: string) => api.get(`/api/workspaces/${id}`).then((r) => r.data.data),
+  diff: (id: string) => api.get(`/api/workspaces/${id}/diff`).then((r) => r.data.data),
+  commit: (id: string, message: string) =>
+    api.post(`/api/workspaces/${id}/commit`, { message }).then((r) => r.data),
+  push: (id: string) => api.post(`/api/workspaces/${id}/push`).then((r) => r.data),
+  merge: (id: string) => api.post(`/api/workspaces/${id}/merge`).then((r) => r.data),
+  discard: (id: string) => api.post(`/api/workspaces/${id}/discard`).then((r) => r.data),
+}
