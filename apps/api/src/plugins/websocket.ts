@@ -1,9 +1,9 @@
 import { FastifyInstance } from 'fastify'
-import websocket from '@fastify/websocket'
+import websocket, { WebSocket } from '@fastify/websocket'
 import { agentRunner } from '../services/agentRunner.js'
 
 // Track WebSocket connections per task
-const taskConnections = new Map<string, Set<any>>()
+const taskConnections = new Map<string, Set<WebSocket>>()
 
 export function broadcastToTask(taskId: string, message: object) {
   const conns = taskConnections.get(taskId)

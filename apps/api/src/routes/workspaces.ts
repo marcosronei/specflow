@@ -57,9 +57,9 @@ export default async function workspaceRoutes(app: FastifyInstance) {
         include: { task: { include: { feature: { include: { project: true } } } } },
       })
       if (!ws) return reply.status(404).send({ error: 'Workspace not found' })
+      if (!ws.worktreePath) return reply.status(400).send({ error: 'Workspace has no worktree path' })
 
-      const worktreePath = ws.worktreePath!
-      const git = simpleGit(worktreePath)
+      const git = simpleGit(ws.worktreePath)
       await git.add('-A')
       const result = await git.commit(body.message)
 
@@ -83,10 +83,11 @@ export default async function workspaceRoutes(app: FastifyInstance) {
         include: { task: { include: { feature: { include: { project: true } } } } },
       })
       if (!ws) return reply.status(404).send({ error: 'Workspace not found' })
+      if (!ws.worktreePath) return reply.status(400).send({ error: 'Workspace has no worktree path' })
+      if (!ws.branch) return reply.status(400).send({ error: 'Workspace has no branch' })
 
-      const worktreePath = ws.worktreePath!
-      const git = simpleGit(worktreePath)
-      await git.push('origin', ws.branch!, ['--set-upstream'])
+      const git = simpleGit(ws.worktreePath)
+      await git.push('origin', ws.branch, ['--set-upstream'])
 
       await prisma.commit.updateMany({
         where: { workspaceId: id, pushedAt: null },
@@ -109,11 +110,12 @@ export default async function workspaceRoutes(app: FastifyInstance) {
         include: { task: { include: { feature: { include: { project: true } } } } },
       })
       if (!ws) return reply.status(404).send({ error: 'Workspace not found' })
+      if (!ws.branch) return reply.status(400).send({ error: 'Workspace has no branch' })
 
       const projectPath = ws.task.feature.project.path
       const featureBranch = ws.task.feature.branch || ws.task.feature.project.mainBranch || 'main'
 
-      await workspaceService.mergeWorktree(projectPath, ws.branch!, featureBranch)
+      await workspaceService.mergeWorktree(projectPath, ws.branch, featureBranch)
       await prisma.workspace.update({
         where: { id },
         data: { status: 'merged', mergedAt: new Date() },
@@ -140,12 +142,17 @@ export default async function workspaceRoutes(app: FastifyInstance) {
       if (ws.worktreePath) {
         try {
           await workspaceService.removeWorktree(projectPath, ws.worktreePath)
-        } catch {}
-        // Also delete the branch
-        try {
-          const git = simpleGit(projectPath)
-          await git.deleteLocalBranch(ws.branch!, true)
-        } catch {}
+        } catch (err) {
+          app.log.warn({ err }, 'Failed to remove worktree, continuing with discard')
+        }
+        if (ws.branch) {
+          try {
+            const git = simpleGit(projectPath)
+            await git.deleteLocalBranch(ws.branch, true)
+          } catch (err) {
+            app.log.warn({ err }, 'Failed to delete local branch, continuing with discard')
+          }
+        }
       }
 
       await prisma.workspace.update({

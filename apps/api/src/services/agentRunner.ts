@@ -57,7 +57,7 @@ Please implement this task completely. Create/modify all necessary files.`
 
     const proc = spawn(command, args, {
       cwd: worktreePath,
-      shell: true,
+      shell: false,
       env: { ...process.env },
     })
 
