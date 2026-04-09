@@ -19,6 +19,8 @@ async function main() {
   await prisma.project.deleteMany()
 
   // Create example project
+  // Note: '/tmp/specflow-demo' is a placeholder path for seed data.
+  // In production, this would be a real git repository path on the user's machine.
   const project = await prisma.project.create({
     data: {
       name: 'SpecFlow Demo',

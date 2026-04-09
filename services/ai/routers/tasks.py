@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from models.task import TasksGenerateRequest, TasksGenerateResponse, TaskItem
 import json
+import re
 from services.claude_service import claude_service
 from config import settings
 
@@ -45,8 +46,12 @@ async def generate_tasks(request: TasksGenerateRequest):
     content, tokens = await claude_service.generate(TASKS_SYSTEM_PROMPT, prompt)
 
     try:
-        # Try to extract JSON if wrapped in markdown
-        if "```" in content:
+        # Extract JSON - handle both plain JSON and markdown code blocks
+        # Try to find JSON array in markdown code blocks first
+        code_block_match = re.search(r'```(?:json)?\s*(\[.*?\])\s*```', content, re.DOTALL)
+        if code_block_match:
+            content = code_block_match.group(1)
+        elif "[" in content:
             start = content.find("[")
             end = content.rfind("]") + 1
             if start != -1 and end > start:
