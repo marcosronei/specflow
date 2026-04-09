@@ -158,4 +158,3 @@ specflow/
 ## 📄 License
 
 MIT © [marcosronei](https://github.com/marcosronei)
-Unified Spec-Driven Development platform — spec, plan, execute and review in one place

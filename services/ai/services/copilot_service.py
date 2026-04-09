@@ -5,6 +5,7 @@ from config import settings
 class CopilotService:
     def __init__(self):
         self.api_key = settings.copilot_api_key
+        # TODO: Verify the correct GitHub Copilot API endpoint before using in production
         self.base_url = "https://api.githubcopilot.com"
 
     async def generate(self, system_prompt: str, user_prompt: str) -> tuple[str, int]:

@@ -10,12 +10,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum AgentType {
+  copilot
+  claude
+}
+
+enum TaskStatus {
+  backlog
+  todo
+  in_progress
+  in_review
+  done
+}
+
+enum FeatureStatus {
+  draft
+  in_progress
+  completed
+}
+
+enum SpecStatus {
+  draft
+  in_review
+  approved
+}
+
 model Project {
   id             String    @id @default(cuid())
   name           String
   path           String    @unique
   description    String?
-  defaultAgent   String    @default("copilot")
+  defaultAgent   AgentType @default(copilot)
   mainBranch     String    @default("main")
   constitution   String?
   features       Feature[]
@@ -25,29 +50,29 @@ model Project {
 }
 
 model Feature {
-  id          String    @id @default(cuid())
+  id          String        @id @default(cuid())
   projectId   String
-  project     Project   @relation(fields: [projectId], references: [id])
+  project     Project       @relation(fields: [projectId], references: [id])
   name        String
   slug        String
   branch      String?
-  status      String    @default("draft")
+  status      FeatureStatus @default(draft)
   spec        Spec?
   plan        Plan?
   tasks       Task[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
 model Spec {
-  id          String    @id @default(cuid())
-  featureId   String    @unique
-  feature     Feature   @relation(fields: [featureId], references: [id])
-  contentMd   String    @default("")
-  version     Int       @default(1)
-  status      String    @default("draft")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id          String     @id @default(cuid())
+  featureId   String     @unique
+  feature     Feature    @relation(fields: [featureId], references: [id])
+  contentMd   String     @default("")
+  version     Int        @default(1)
+  status      SpecStatus @default(draft)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 model Plan {
@@ -67,9 +92,9 @@ model Task {
   feature      Feature       @relation(fields: [featureId], references: [id])
   title        String
   description  String?
-  status       String        @default("backlog")
+  status       TaskStatus    @default(backlog)
   priority     String        @default("medium")
-  agent        String        @default("copilot")
+  agent        AgentType     @default(copilot)
   isParallel   Boolean       @default(false)
   order        Int           @default(0)
   attempts     TaskAttempt[]
@@ -79,15 +104,15 @@ model Task {
 }
 
 model TaskAttempt {
-  id          String    @id @default(cuid())
+  id          String     @id @default(cuid())
   taskId      String
-  task        Task      @relation(fields: [taskId], references: [id])
-  agent       String
-  status      String    @default("pending")
+  task        Task       @relation(fields: [taskId], references: [id])
+  agent       AgentType
+  status      String     @default("pending")
   log         String?
   startedAt   DateTime?
   finishedAt  DateTime?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime   @default(now())
 }
 
 model Workspace {
@@ -133,11 +158,11 @@ model Memory {
 }
 
 model AgentCall {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   taskId    String?
-  agent     String
+  agent     AgentType
   prompt    String
   response  String?
   tokens    Int?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 }
