@@ -110,22 +110,26 @@ model TaskAttempt {
   agent       AgentType
   status      String     @default("pending")
   log         String?
+  exitCode    Int?
+  prompt      String?    @db.Text
   startedAt   DateTime?
   finishedAt  DateTime?
   createdAt   DateTime   @default(now())
 }
 
 model Workspace {
-  id           String   @id @default(cuid())
-  taskId       String   @unique
-  task         Task     @relation(fields: [taskId], references: [id])
+  id           String    @id @default(cuid())
+  taskId       String    @unique
+  task         Task      @relation(fields: [taskId], references: [id])
   worktreePath String?
   branch       String?
-  status       String   @default("idle")
+  status       String    @default("idle")
+  mergedAt     DateTime?
+  discardedAt  DateTime?
   diffs        Diff[]
   commits      Commit[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model Diff {
