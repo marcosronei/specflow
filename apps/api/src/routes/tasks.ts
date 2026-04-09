@@ -199,7 +199,8 @@ export default async function taskRoutes(app: FastifyInstance) {
         },
       })
 
-      const wsUrl = `ws://localhost:${process.env.API_PORT || 3001}/ws/tasks/${id}/terminal`
+      const wsHost = process.env.WS_HOST || `localhost:${process.env.API_PORT || 3001}`
+      const wsUrl = `ws://${wsHost}/ws/tasks/${id}/terminal`
       return reply.send({ data: { attemptId: attempt.id, wsUrl, workspaceId: workspace.id } })
     } catch (err) {
       app.log.error(err)

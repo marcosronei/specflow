@@ -700,7 +700,7 @@ export default function FeatureDetail() {
           ) : (
             <div className="text-center py-12 border border-dashed border-border rounded-lg">
               <p className="text-2xl mb-3">🔍</p>
-              <p className="font-medium">Review &amp; Diff</p>
+              <p className="font-medium">Review & Diff</p>
               <p className="text-sm text-muted-foreground mt-1">
                 Execute a task to generate changes, then review them here.
               </p>
