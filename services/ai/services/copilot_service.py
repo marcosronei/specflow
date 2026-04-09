@@ -23,6 +23,7 @@ class CopilotService:
                     ],
                 },
             )
+            response.raise_for_status()
             data = response.json()
             content = data["choices"][0]["message"]["content"]
             tokens = data.get("usage", {}).get("total_tokens", 0)

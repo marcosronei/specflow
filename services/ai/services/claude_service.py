@@ -1,3 +1,4 @@
+import asyncio
 import anthropic
 from config import settings
 
@@ -8,7 +9,8 @@ class ClaudeService:
         self.model = settings.ai_model
 
     async def generate(self, system_prompt: str, user_prompt: str) -> tuple[str, int]:
-        message = self.client.messages.create(
+        message = await asyncio.to_thread(
+            self.client.messages.create,
             model=self.model,
             max_tokens=settings.max_tokens,
             system=system_prompt,
