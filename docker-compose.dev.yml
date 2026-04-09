@@ -1,0 +1,31 @@
+version: '3.9'
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  ai:
+    build:
+      context: ./services/ai
+      dockerfile: Dockerfile
+    volumes:
+      - ./services/ai:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./apps/api:/app
+      - /app/node_modules
+    command: pnpm dev
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+    command: pnpm dev

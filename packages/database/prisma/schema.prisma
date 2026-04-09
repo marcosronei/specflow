@@ -1,0 +1,168 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AgentType {
+  copilot
+  claude
+}
+
+enum TaskStatus {
+  backlog
+  todo
+  in_progress
+  in_review
+  done
+}
+
+enum FeatureStatus {
+  draft
+  in_progress
+  completed
+}
+
+enum SpecStatus {
+  draft
+  in_review
+  approved
+}
+
+model Project {
+  id             String    @id @default(cuid())
+  name           String
+  path           String    @unique
+  description    String?
+  defaultAgent   AgentType @default(copilot)
+  mainBranch     String    @default("main")
+  constitution   String?
+  features       Feature[]
+  memories       Memory[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Feature {
+  id          String        @id @default(cuid())
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id])
+  name        String
+  slug        String
+  branch      String?
+  status      FeatureStatus @default(draft)
+  spec        Spec?
+  plan        Plan?
+  tasks       Task[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Spec {
+  id          String     @id @default(cuid())
+  featureId   String     @unique
+  feature     Feature    @relation(fields: [featureId], references: [id])
+  contentMd   String     @default("")
+  version     Int        @default(1)
+  status      SpecStatus @default(draft)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Plan {
+  id           String   @id @default(cuid())
+  featureId    String   @unique
+  feature      Feature  @relation(fields: [featureId], references: [id])
+  contentMd    String   @default("")
+  dataModel    String?
+  apiSpec      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Task {
+  id           String        @id @default(cuid())
+  featureId    String
+  feature      Feature       @relation(fields: [featureId], references: [id])
+  title        String
+  description  String?
+  status       TaskStatus    @default(backlog)
+  priority     String        @default("medium")
+  agent        AgentType     @default(copilot)
+  isParallel   Boolean       @default(false)
+  order        Int           @default(0)
+  attempts     TaskAttempt[]
+  workspace    Workspace?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model TaskAttempt {
+  id          String     @id @default(cuid())
+  taskId      String
+  task        Task       @relation(fields: [taskId], references: [id])
+  agent       AgentType
+  status      String     @default("pending")
+  log         String?
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  createdAt   DateTime   @default(now())
+}
+
+model Workspace {
+  id           String   @id @default(cuid())
+  taskId       String   @unique
+  task         Task     @relation(fields: [taskId], references: [id])
+  worktreePath String?
+  branch       String?
+  status       String   @default("idle")
+  diffs        Diff[]
+  commits      Commit[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Diff {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  filePath    String
+  content     String
+  createdAt   DateTime  @default(now())
+}
+
+model Commit {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  hash        String?
+  message     String
+  pushedAt    DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model Memory {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id])
+  type      String   @default("global")
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AgentCall {
+  id        String    @id @default(cuid())
+  taskId    String?
+  agent     AgentType
+  prompt    String
+  response  String?
+  tokens    Int?
+  createdAt DateTime  @default(now())
+}
