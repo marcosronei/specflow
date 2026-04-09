@@ -12,13 +12,13 @@ app.register(cors, {
 })
 
 // Register routes
-app.register(import('./routes/projects'), { prefix: '/api/projects' })
-app.register(import('./routes/features'), { prefix: '/api/features' })
-app.register(import('./routes/specs'), { prefix: '/api/specs' })
-app.register(import('./routes/plans'), { prefix: '/api/plans' })
-app.register(import('./routes/tasks'), { prefix: '/api/tasks' })
-app.register(import('./routes/git'), { prefix: '/api/git' })
-app.register(import('./routes/ai'), { prefix: '/api/ai' })
+app.register(import('./routes/projects.js'), { prefix: '/api/projects' })
+app.register(import('./routes/features.js'), { prefix: '/api/features' })
+app.register(import('./routes/specs.js'), { prefix: '/api/specs' })
+app.register(import('./routes/plans.js'), { prefix: '/api/plans' })
+app.register(import('./routes/tasks.js'), { prefix: '/api/tasks' })
+app.register(import('./routes/git.js'), { prefix: '/api/git' })
+app.register(import('./routes/ai.js'), { prefix: '/api/ai' })
 
 // Health check
 app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }))

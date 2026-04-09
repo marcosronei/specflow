@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from routers import spec, plan, tasks, review
-from config import settings
 
 app = FastAPI(
     title="SpecFlow AI Service",

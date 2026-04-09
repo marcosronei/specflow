@@ -7,6 +7,8 @@ class TaskItem(BaseModel):
     description: Optional[str] = None
     priority: str = "medium"
     agent: str = "copilot"
+    isParallel: bool = False
+    order: int = 0
 
 
 class TasksGenerateRequest(BaseModel):

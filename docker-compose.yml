@@ -21,8 +21,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - COPILOT_API_KEY=${COPILOT_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - COPILOT_API_KEY=${COPILOT_API_KEY:-}
     volumes:
       - ./services/ai:/app
 
@@ -33,11 +33,13 @@ services:
     environment:
       - DATABASE_URL=postgresql://specflow:specflow@postgres:5432/specflow
       - AI_SERVICE_URL=http://ai:8000
+      - NODE_ENV=production
     depends_on:
       postgres:
         condition: service_healthy
       ai:
         condition: service_started
+    command: sh -c "npx prisma migrate deploy --schema=/app/packages/database/prisma/schema.prisma && node dist/index.js"
 
   web:
     build: ./apps/web
