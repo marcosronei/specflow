@@ -1,45 +1,67 @@
 import simpleGit, { SimpleGit } from 'simple-git'
+import * as fs from 'fs'
 
 export class GitService {
-  private git: SimpleGit
-
-  constructor(repoPath: string = process.cwd()) {
-    this.git = simpleGit(repoPath)
+  private getGit(repoPath: string): SimpleGit {
+    return simpleGit(repoPath)
   }
 
-  async getStatus() {
-    return this.git.status()
+  async validateRepo(path: string): Promise<boolean> {
+    try {
+      if (!fs.existsSync(path)) return false
+      const git = this.getGit(path)
+      await git.status()
+      return true
+    } catch {
+      return false
+    }
   }
 
-  async getCurrentBranch(): Promise<string> {
-    const branch = await this.git.branch()
+  async createBranch(repoPath: string, branchName: string): Promise<void> {
+    const git = this.getGit(repoPath)
+    await git.checkoutLocalBranch(branchName)
+  }
+
+  async getCurrentBranch(repoPath: string): Promise<string> {
+    const git = this.getGit(repoPath)
+    const branch = await git.branch()
     return branch.current
   }
 
-  async createBranch(name: string): Promise<void> {
-    await this.git.checkoutLocalBranch(name)
+  async getStatus(repoPath: string) {
+    const git = this.getGit(repoPath)
+    return git.status()
   }
 
-  async commit(message: string, files?: string[]): Promise<string> {
-    if (files && files.length > 0) {
-      await this.git.add(files)
-    } else {
-      await this.git.add('.')
+  async getDiff(repoPath: string, branch?: string): Promise<string> {
+    const git = this.getGit(repoPath)
+    if (branch) {
+      return git.diff([branch])
     }
-    const result = await this.git.commit(message)
+    return git.diff()
+  }
+
+  async stageAll(repoPath: string): Promise<void> {
+    const git = this.getGit(repoPath)
+    await git.add('-A')
+  }
+
+  async commit(repoPath: string, message: string): Promise<string> {
+    const git = this.getGit(repoPath)
+    const result = await git.commit(message)
     return result.commit
   }
 
-  async push(remote = 'origin', branch?: string): Promise<void> {
-    const currentBranch = branch || (await this.getCurrentBranch())
-    await this.git.push(remote, currentBranch)
+  async push(repoPath: string, remote = 'origin', branch?: string): Promise<void> {
+    const git = this.getGit(repoPath)
+    const currentBranch = branch || (await this.getCurrentBranch(repoPath))
+    await git.push(remote, currentBranch)
   }
 
-  async getDiff(from?: string, to?: string): Promise<string> {
-    if (from && to) {
-      return this.git.diff([from, to])
-    }
-    return this.git.diff()
+  async listBranches(repoPath: string): Promise<string[]> {
+    const git = this.getGit(repoPath)
+    const result = await git.branch()
+    return result.all
   }
 }
 

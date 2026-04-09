@@ -7,7 +7,12 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "test": "turbo test",
-    "type-check": "turbo type-check"
+    "type-check": "turbo type-check",
+    "start": "docker compose up -d",
+    "stop": "docker compose down",
+    "db:migrate": "cd packages/database && pnpm db:migrate",
+    "db:seed": "cd packages/database && pnpm db:seed",
+    "db:studio": "cd packages/database && pnpm db:studio"
   },
   "devDependencies": {
     "turbo": "^2.0.0",

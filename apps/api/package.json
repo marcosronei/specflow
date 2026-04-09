@@ -13,6 +13,8 @@
     "@fastify/cors": "^9.0.0",
     "@fastify/websocket": "^10.0.0",
     "@prisma/client": "^5.14.0",
+    "@specflow/database": "workspace:*",
+    "@specflow/shared-types": "workspace:*",
     "fastify": "^5.0.0",
     "simple-git": "^3.24.0",
     "axios": "^1.7.0"
