@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import spec, plan, tasks, review
+from routers import spec, plan, tasks, review, constitution
 
 app = FastAPI(
     title="SpecFlow AI Service",
@@ -21,6 +21,7 @@ app.include_router(spec.router, prefix="/spec", tags=["spec"])
 app.include_router(plan.router, prefix="/plan", tags=["plan"])
 app.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
 app.include_router(review.router, prefix="/review", tags=["review"])
+app.include_router(constitution.router, prefix="/constitution", tags=["constitution"])
 
 
 @app.get("/health")

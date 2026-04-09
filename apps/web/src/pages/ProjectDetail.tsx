@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { projectsApi, featuresApi } from '../lib/api'
+import GitPanel from '../components/git/GitPanel'
 
 interface Project {
   id: string
@@ -39,6 +40,7 @@ export default function ProjectDetail() {
   const [featureName, setFeatureName] = useState('')
   const [constitutionValue, setConstitutionValue] = useState<string | null>(null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [showGitPanel, setShowGitPanel] = useState(false)
 
   const { data: project, isLoading, error } = useQuery<Project>({
     queryKey: ['projects', id],
@@ -126,6 +128,12 @@ export default function ProjectDetail() {
           <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">
             {project.defaultAgent}
           </span>
+          <button
+            onClick={() => setShowGitPanel(true)}
+            className="px-3 py-2 border border-border rounded-md text-sm hover:bg-accent transition-colors"
+          >
+            🔀 Git
+          </button>
           <button
             onClick={() => setShowNewFeature(true)}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:opacity-90"
@@ -253,6 +261,12 @@ export default function ProjectDetail() {
           </div>
         </div>
       )}
+
+      <GitPanel
+        projectPath={project.path}
+        open={showGitPanel}
+        onClose={() => setShowGitPanel(false)}
+      />
     </div>
   )
 }

@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { featuresApi, specsApi, plansApi, tasksApi } from '../lib/api'
+import { featuresApi, specsApi, plansApi, tasksApi, workspacesApi } from '../lib/api'
+import ExecutionPanel from '../components/tasks/ExecutionPanel'
+import DiffViewer from '../components/review/DiffViewer'
 import {
   DndContext,
   DragEndEvent,
@@ -79,10 +81,12 @@ function SortableTaskCard({
   task,
   onUpdate,
   onDelete,
+  onExecute,
 }: {
   task: Task
   onUpdate: (id: string, data: Partial<Task>) => void
   onDelete: (id: string) => void
+  onExecute: (task: Task) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
@@ -143,16 +147,23 @@ function SortableTaskCard({
         >
           Del
         </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onExecute(task) }}
+          className="opacity-0 group-hover:opacity-100 text-xs text-green-600 dark:text-green-400 hover:underline transition-opacity"
+        >
+          ▶ Execute
+        </button>
       </div>
     </div>
   )
 }
 
-function KanbanBoard({ featureId }: { featureId: string }) {
+function KanbanBoard({ featureId, onReviewChanges }: { featureId: string; onReviewChanges?: (workspaceId: string) => void }) {
   const queryClient = useQueryClient()
   const [addingTo, setAddingTo] = useState<TaskStatus | null>(null)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [generating, setGenerating] = useState(false)
+  const [executingTask, setExecutingTask] = useState<Task | null>(null)
 
   const { data: tasks = [], isLoading } = useQuery<Task[]>({
     queryKey: ['tasks', featureId],
@@ -252,6 +263,7 @@ function KanbanBoard({ featureId }: { featureId: string }) {
                         onDelete={(id) => {
                           if (confirm('Delete this task?')) deleteMutation.mutate(id)
                         }}
+                        onExecute={(t) => setExecutingTask(t)}
                       />
                     ))}
                   </div>
@@ -303,6 +315,18 @@ function KanbanBoard({ featureId }: { featureId: string }) {
           })}
         </div>
       </DndContext>
+
+      {executingTask && (
+        <ExecutionPanel
+          task={executingTask}
+          open={!!executingTask}
+          onClose={() => setExecutingTask(null)}
+          onReviewChanges={(wsId) => {
+            onReviewChanges?.(wsId)
+            setExecutingTask(null)
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -533,9 +557,33 @@ function PlanTab({ feature }: { feature: Feature }) {
   )
 }
 
+function DiffViewerWrapper({ workspaceId, onBack }: { workspaceId: string; onBack: () => void }) {
+  const { data: workspace, isLoading } = useQuery({
+    queryKey: ['workspaces', workspaceId],
+    queryFn: () => workspacesApi.get(workspaceId),
+    enabled: !!workspaceId,
+  })
+
+  if (isLoading) {
+    return <div className="h-32 bg-muted rounded animate-pulse" />
+  }
+
+  if (!workspace) {
+    return (
+      <div className="text-center py-8 text-muted-foreground text-sm">
+        Workspace not found.{' '}
+        <button onClick={onBack} className="text-primary hover:underline">Go back</button>
+      </div>
+    )
+  }
+
+  return <DiffViewer workspace={workspace} onDiscard={onBack} />
+}
+
 export default function FeatureDetail() {
   const { id, featureId } = useParams<{ id: string; featureId: string }>()
   const [activeTab, setActiveTab] = useState<Tab>('spec')
+  const [reviewWorkspaceId, setReviewWorkspaceId] = useState<string | null>(null)
 
   const { data: feature, isLoading, error } = useQuery<Feature>({
     queryKey: ['features', featureId],
@@ -629,13 +677,35 @@ export default function FeatureDetail() {
       <div>
         {activeTab === 'spec' && <SpecTab feature={feature} />}
         {activeTab === 'plan' && <PlanTab feature={feature} />}
-        {activeTab === 'tasks' && <KanbanBoard featureId={feature.id} />}
+        {activeTab === 'tasks' && (
+          <KanbanBoard
+            featureId={feature.id}
+            onReviewChanges={(wsId) => {
+              setReviewWorkspaceId(wsId)
+              setActiveTab('review')
+            }}
+          />
+        )}
         {activeTab === 'review' && (
-          <div className="text-center py-12 border border-dashed border-border rounded-lg">
-            <p className="text-2xl mb-3">🔍</p>
-            <p className="font-medium">Review & Diff</p>
-            <p className="text-sm text-muted-foreground mt-1">Coming soon — review code changes and push commits</p>
-          </div>
+          reviewWorkspaceId ? (
+            <div className="space-y-4">
+              <button
+                onClick={() => setReviewWorkspaceId(null)}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                ← Back
+              </button>
+              <DiffViewerWrapper workspaceId={reviewWorkspaceId} onBack={() => setReviewWorkspaceId(null)} />
+            </div>
+          ) : (
+            <div className="text-center py-12 border border-dashed border-border rounded-lg">
+              <p className="text-2xl mb-3">🔍</p>
+              <p className="font-medium">Review & Diff</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Execute a task to generate changes, then review them here.
+              </p>
+            </div>
+          )
         )}
       </div>
     </div>
